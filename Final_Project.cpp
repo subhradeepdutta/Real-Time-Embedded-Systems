@@ -1,7 +1,7 @@
 /***************************************************************************************
 * FILENAME: capture.cpp                                                                     
 * OWNER: Sridhar Pavithrapu & Subhradeep Dutta.							       
-* FILE DESCRIPTION: This file include's the function definitions of capture.cpp 
+* FILE DESCRIPTION: This file includes the function definitions of capture.cpp 
 ***************************************************************************************/
 
 /* Headers section */
@@ -179,6 +179,7 @@ void *FrameCapture(void * unused)
 	while(1)
     {	
 		#ifdef FREQUENCY_FRAMECAPTURE
+		/*When count of captured frames is zero then start the timer*/
 		if(framecapture_count == 0)
 		{
 			clock_gettime(CLOCK_REALTIME, &rtclk_frameCapture_start_time);
@@ -188,12 +189,15 @@ void *FrameCapture(void * unused)
 		
 		/* Capturing the input frame from the connected camera device */
 		syslog(LOG_INFO, "%s", "FrameCapture thread grabbing frame resource\n");
+		/*Mutex lock prior to frame capture*/
 		pthread_mutex_lock(&rsrc_frameCapture);
        		frame_original=cvQueryFrame(capture);
+		/*Mutex unlocked after frame capture complete*/
 		pthread_mutex_unlock(&rsrc_frameCapture);
 
 		#ifdef FREQUENCY_FRAMECAPTURE
 		framecapture_count++;
+		/*Stop the timer once 500 frames have been captured*/
 		if(framecapture_count == 500)
 		{		
 			clock_gettime(CLOCK_REALTIME, &rtclk_frameCapture_stop_time);
@@ -236,6 +240,7 @@ void *CentroidDetection(void * unused)
 		sem_wait(&coordinates_sem);	
 		
 		#ifdef FREQUENCY_CENTROIDDETECTION
+		/*When centroid detection count is zero start the timer*/
 		if(centroiddetection_count == 0)
 		{
 			clock_gettime(CLOCK_REALTIME, &rtclk_centroidDetection_start_time);
@@ -243,16 +248,19 @@ void *CentroidDetection(void * unused)
 		}
 		#endif
 
-		/* Creating the Mat object 'mat_frame' similar to the input 'frame' using the copy constructor */
+		
 		syslog(LOG_INFO, "%s", "Centroid Detection thread grabbing frame resource\n");
-		pthread_mutex_lock(&rsrc_frameCapture);		
+		/*Mutex lock prior to creating a copy of the input frame*/
+		pthread_mutex_lock(&rsrc_frameCapture);	
+		/* Creating the Mat object 'mat_frame' to create a copy using the copy constructor */		
 		Mat mat_frame(frame_original);
+		/*Mutex unlocked after duplicating the captured frame*/
 		pthread_mutex_unlock(&rsrc_frameCapture);
 		/* Smoothing the image to remove noise */
 		medianBlur(mat_frame, mat_frame, 3);
-		/* Changing the colorspace from RGB to HSV */
+		/* Changing the color space from RGB to HSV */
 		cvtColor(mat_frame, hsv_image, CV_BGR2HSV);
-		/* Change the range, to detct green color object */
+		/* Change the range, to detect green color object */
         inRange(hsv_image, Scalar(lowH, lowS, lowV), Scalar(highH, highS, highV), final_image);
 		/* Applying erode and dilation filters to the above modified image */
 		erode_structureElement = getStructuringElement( MORPH_RECT,Size(3,3));
@@ -278,6 +286,7 @@ void *CentroidDetection(void * unused)
 					if(area>MIN_AREA_OF_OBJECT)
 					{
 						drawContours(mat_frame,contours,-1,CV_RGB(255,0,0),3);
+						/* Mutex lock prior to determining the x and y coordinates */
 						pthread_mutex_lock(&rsrc_Coordinates);
 						coordinate_x = (moment.m10/area);
 						coordinate_y = (moment.m01/area);
@@ -307,6 +316,7 @@ void *CentroidDetection(void * unused)
 		
 		#ifdef FREQUENCY_CENTROIDDETECTION
 		centroiddetection_count++;
+		/*When centroid detection count is 500 stop the timer*/
 		if(centroiddetection_count == 500)
 		{		
 			clock_gettime(CLOCK_REALTIME, &rtclk_centroidDetection_stop_time);
@@ -631,7 +641,7 @@ int main (int argc, char *argv[])
 		perror(NULL); exit(-1);
 	}
 	
-	/* Printing the schedular policy after changing it to FIFO */
+	/* Printing the scheduler policy after changing it to FIFO */
 	syslog(LOG_DEBUG, "%s", "After adjustments to scheduling policy:\n");
 	print_scheduler();
 	syslog(LOG_INFO, "min prio = %d, max prio = %d\n", rt_min_prio, rt_max_prio);
@@ -686,7 +696,7 @@ int main (int argc, char *argv[])
 	}
 	
 
-    /* Blocking the main untill all the threads complete its execution */
+    /* Suspending main until all the threads complete its execution */
 	pthread_join ( FrameCapture_Thread , NULL );
 	pthread_join ( CentroidDetection_Thread , NULL );
 	pthread_join ( ObstacleMovement_Thread , NULL );
