@@ -191,7 +191,7 @@ void *FrameCapture(void * unused)
 		syslog(LOG_INFO, "%s", "FrameCapture thread grabbing frame resource\n");
 		/*Mutex lock prior to frame capture*/
 		pthread_mutex_lock(&rsrc_frameCapture);
-       		frame_original=cvQueryFrame(capture);
+       	frame_original=cvQueryFrame(capture);
 		/*Mutex unlocked after frame capture complete*/
 		pthread_mutex_unlock(&rsrc_frameCapture);
 
@@ -259,8 +259,10 @@ void *CentroidDetection(void * unused)
 		/* Smoothing the image to remove noise */
 		medianBlur(mat_frame, mat_frame, 3);
 		/* Changing the color space from RGB to HSV */
+		/* In order to apply erosion dilation HSV color space is a requirement*/
 		cvtColor(mat_frame, hsv_image, CV_BGR2HSV);
-		/* Change the range, to detect green color object */
+		/* Change the range to detect green color object */
+		/*Defines what we are looking for in the input image, in this case green colored objects that satisfy the below condition*/
         inRange(hsv_image, Scalar(lowH, lowS, lowV), Scalar(highH, highS, highV), final_image);
 		/* Applying erode and dilation filters to the above modified image */
 		erode_structureElement = getStructuringElement( MORPH_RECT,Size(3,3));
@@ -273,16 +275,18 @@ void *CentroidDetection(void * unused)
 		/* Find contours of filtered image using openCV findContours function */
         findContours(temp_image,contours,hierarchy,CV_RETR_CCOMP,CV_CHAIN_APPROX_SIMPLE);
 		/* Condition for checking the objects found through contours */
+		/*Size parameter of hierarchy defines the number of contours that were found*/
         if (hierarchy.size() > 0) 
         {
             int numObjects = hierarchy.size();
             /* If the number of objects greater than MAX_NUM_OBJECTS we have a noisy filter */
             if(numObjects<MAX_NUMBER_OF_OBJECTS){
-                for (int index = 0; index >= 0; index = hierarchy[index][0])
+                for (int index = 0; index >= 0; index = hierarchy[index][0])//Iterating through each of the contours
 				{
 					moment = moments((cv::Mat)contours[index]);
+					/*Area of the contour under consideration*/
 					area = moment.m00;
-					/* Check for removing stray circles */
+					/* Check for removing stray circles which do not meet a specific threshold */
 					if(area>MIN_AREA_OF_OBJECT)
 					{
 						drawContours(mat_frame,contours,-1,CV_RGB(255,0,0),3);
@@ -308,6 +312,7 @@ void *CentroidDetection(void * unused)
 		/* Storing the images in the vector for video writer thread */
 		pthread_mutex_lock(&rsrc_video);
 		various_images.push_back(mat_frame);
+		/*Keep track if a valid image frame is available */
 		video_count++;
 		pthread_mutex_unlock(&rsrc_video);
         
@@ -515,7 +520,8 @@ void *Sequencer(void * unused)
 		usleep(75000);
 		sem_post(&coordinates_sem);
 		usleep(125000);
-		sem_post(&coordinates_sem);sem_post(&obstacle_sem);
+		sem_post(&coordinates_sem);
+		sem_post(&obstacle_sem);
 	}	
 }
 
