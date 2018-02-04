@@ -1,6 +1,6 @@
 /***************************************************************************************
-* FILENAME: capture.cpp                                                                     
-* OWNER: Sridhar Pavithrapu & Subhradeep Dutta.							       
+* FILENAME: capture.cpp																	 
+* OWNER: Sridhar Pavithrapu & Subhradeep Dutta.								   
 * FILE DESCRIPTION: This file includes the function definitions of capture.cpp 
 ***************************************************************************************/
 
@@ -114,29 +114,29 @@ int delta_t(struct timespec *stop, struct timespec *start, struct timespec *delt
   /* Calculating the time difference */
   if(dt_sec >= 0)
   {
-    if(dt_nsec >= 0)
-    {
-      delta_t->tv_sec=dt_sec;
-      delta_t->tv_nsec=dt_nsec;
-    }
-    else
-    {
-      delta_t->tv_sec=dt_sec-1;
-      delta_t->tv_nsec=NSEC_PER_SEC+dt_nsec;
-    }
+	if(dt_nsec >= 0)
+	{
+	  delta_t->tv_sec=dt_sec;
+	  delta_t->tv_nsec=dt_nsec;
+	}
+	else
+	{
+	  delta_t->tv_sec=dt_sec-1;
+	  delta_t->tv_nsec=NSEC_PER_SEC+dt_nsec;
+	}
   }
   else
   {
-    if(dt_nsec >= 0)
-    {
-      delta_t->tv_sec=dt_sec;
-      delta_t->tv_nsec=dt_nsec;
-    }
-    else
-    {
-      delta_t->tv_sec=dt_sec-1;
-      delta_t->tv_nsec=NSEC_PER_SEC+dt_nsec;
-    }
+	if(dt_nsec >= 0)
+	{
+	  delta_t->tv_sec=dt_sec;
+	  delta_t->tv_nsec=dt_nsec;
+	}
+	else
+	{
+	  delta_t->tv_sec=dt_sec-1;
+	  delta_t->tv_nsec=NSEC_PER_SEC+dt_nsec;
+	}
   }
   return(OK);
 }
@@ -177,7 +177,7 @@ void *FrameCapture(void * unused)
 	syslog(LOG_INFO, "%s", "Entered Frame Capture\n");
 	
 	while(1)
-    {	
+	{	
 		#ifdef FREQUENCY_FRAMECAPTURE
 		/*When count of captured frames is zero then start the timer*/
 		if(framecapture_count == 0)
@@ -218,25 +218,25 @@ void *CentroidDetection(void * unused)
 {
 	syslog(LOG_INFO, "%s", "Entered Centroid Detection\n");
 	Mat hsv_image, final_image, erode_structureElement, dilate_structureElement, temp_image;
-    vector< vector<Point> > contours;
-    vector<Vec4i> hierarchy;
+	vector< vector<Point> > contours;
+	vector<Vec4i> hierarchy;
 	Moments moment;
 	stringstream x_coordinate,y_coordinate;
 	stringstream final_coordinates;
-    double area;
-	/* Values for green color object detection */     
-    /* Set Hue */
-    int lowH = 34;       
-    int highH = 80;
-    /* Set Saturation */
-    int lowS = 50;      
-    int highS = 220;
-    /* Set Value */
-    int lowV = 50;      
-    int highV = 200;
+	double area;
+	/* Values for green color object detection */	 
+	/* Set Hue */
+	int lowH = 34;	   
+	int highH = 80;
+	/* Set Saturation */
+	int lowS = 50;	  
+	int highS = 220;
+	/* Set Value */
+	int lowV = 50;	  
+	int highV = 200;
 	
 	while(1)
-    {	
+	{	
 		sem_wait(&coordinates_sem);	
 		
 		#ifdef FREQUENCY_CENTROIDDETECTION
@@ -263,25 +263,25 @@ void *CentroidDetection(void * unused)
 		cvtColor(mat_frame, hsv_image, CV_BGR2HSV);
 		/* Change the range to detect green color object */
 		/*Defines what we are looking for in the input image, in this case green colored objects that satisfy the below condition*/
-        inRange(hsv_image, Scalar(lowH, lowS, lowV), Scalar(highH, highS, highV), final_image);
+		inRange(hsv_image, Scalar(lowH, lowS, lowV), Scalar(highH, highS, highV), final_image);
 		/* Applying erode and dilation filters to the above modified image */
 		erode_structureElement = getStructuringElement( MORPH_RECT,Size(3,3));
-        dilate_structureElement = getStructuringElement( MORPH_RECT,Size(8,8));
-        erode(final_image,final_image,erode_structureElement);
-        erode(final_image,final_image,erode_structureElement);
-        dilate(final_image,final_image,dilate_structureElement);
-        dilate(final_image,final_image,dilate_structureElement);
+		dilate_structureElement = getStructuringElement( MORPH_RECT,Size(8,8));
+		erode(final_image,final_image,erode_structureElement);
+		erode(final_image,final_image,erode_structureElement);
+		dilate(final_image,final_image,dilate_structureElement);
+		dilate(final_image,final_image,dilate_structureElement);
 		final_image.copyTo(temp_image);
 		/* Find contours of filtered image using openCV findContours function */
-        findContours(temp_image,contours,hierarchy,CV_RETR_CCOMP,CV_CHAIN_APPROX_SIMPLE);
+		findContours(temp_image,contours,hierarchy,CV_RETR_CCOMP,CV_CHAIN_APPROX_SIMPLE);
 		/* Condition for checking the objects found through contours */
 		/*Size parameter of hierarchy defines the number of contours that were found*/
-        if (hierarchy.size() > 0) 
-        {
-            int numObjects = hierarchy.size();
-            /* If the number of objects greater than MAX_NUM_OBJECTS we have a noisy filter */
-            if(numObjects<MAX_NUMBER_OF_OBJECTS){
-                for (int index = 0; index >= 0; index = hierarchy[index][0])//Iterating through each of the contours
+		if (hierarchy.size() > 0) 
+		{
+			int numObjects = hierarchy.size();
+			/* If the number of objects greater than MAX_NUM_OBJECTS we have a noisy filter */
+			if(numObjects<MAX_NUMBER_OF_OBJECTS){
+				for (int index = 0; index >= 0; index = hierarchy[index][0])//Iterating through each of the contours
 				{
 					moment = moments((cv::Mat)contours[index]);
 					/*Area of the contour under consideration*/
@@ -305,10 +305,10 @@ void *CentroidDetection(void * unused)
 						final_coordinates.str(std::string());
 						x_coordinate.str(std::string());
 						y_coordinate.str(std::string());
-                    }    
-                }
-            }
-        } 
+					}	
+				}
+			}
+		} 
 		
 		/* Storing the images in the vector for video writer thread */
 		pthread_mutex_lock(&rsrc_video);
@@ -316,9 +316,9 @@ void *CentroidDetection(void * unused)
 		/*Keep track if a valid image frame is available */
 		video_count++;
 		pthread_mutex_unlock(&rsrc_video);
-        
+		
 		imshow( centroid_window_name, mat_frame);
-        char q = cvWaitKey(1);
+		char q = cvWaitKey(1);
 		
 		#ifdef FREQUENCY_CENTROIDDETECTION
 		centroiddetection_count++;
@@ -347,10 +347,10 @@ void *ObstacleMovement(void * unused)
 	stringstream x_coordinate,y_coordinate, final_coordinates;
 	Mat drawing=Mat::zeros( 480, 1281, CV_8UC3 );
 	Point2i start_point(0,0),end_point(0,0);
-    Mat obstacle_window,trajectory_window;
-    obstacle_window = drawing(Rect(0,0,640,480));
-    trajectory_window = drawing(Rect(641,0,640,480));
-    line(drawing,Point(641,0),Point(641,480),CV_RGB(255,0,0),2);
+	Mat obstacle_window,trajectory_window;
+	obstacle_window = drawing(Rect(0,0,640,480));
+	trajectory_window = drawing(Rect(641,0,640,480));
+	line(drawing,Point(641,0),Point(641,480),CV_RGB(255,0,0),2);
 	int trajectory_count =0;
 	bool temp=false;
 	
@@ -396,7 +396,7 @@ void *ObstacleMovement(void * unused)
 		/* Check for corner case conditions */
 		if(obstacle_xaxes < 20)
 		{
-            obstacle_xaxes = 20;
+			obstacle_xaxes = 20;
 		}
 		else if(obstacle_xaxes > 620)
 		{
@@ -448,11 +448,11 @@ void *Video_Output(void * unused)
 	syslog(LOG_INFO, "%s", "Entered Video writer thread\n");
 	/* Opening a video writer */
 	cv::VideoWriter output_cap("/home/subhradeep/video/video_output/sri.avi",
-               CV_FOURCC('M','J','P','G'), 1, cv::Size ( 640,480), true);
+			   CV_FOURCC('M','J','P','G'), 1, cv::Size ( 640,480), true);
 	if (!output_cap.isOpened())
 	{
-        	std::cout << "!!! Output video could not be opened" << std::endl;
-        	pthread_exit(NULL);
+			std::cout << "!!! Output video could not be opened" << std::endl;
+			pthread_exit(NULL);
 	}
 	Mat retrieve_element; 
 	
@@ -541,54 +541,54 @@ int main (int argc, char *argv[])
 	openlog("RTES_Final_Project",LOG_PID,LOG_LOCAL1 );
 	
 	/* Check for input argument during execution */
-    if(argc > 1)
-    {
-        sscanf(argv[1], "%d", &dev);
-		syslog(LOG_INFO, "using %s\n",argv[1]);
-    }
-    else if(argc == 1)
+	if(argc > 1)
 	{
-        syslog(LOG_INFO, "%s", "using default\n");
+		sscanf(argv[1], "%d", &dev);
+		syslog(LOG_INFO, "using %s\n",argv[1]);
 	}
-    else
-    {
+	else if(argc == 1)
+	{
+		syslog(LOG_INFO, "%s", "using default\n");
+	}
+	else
+	{
 		syslog(LOG_INFO, "%s", "usage: capture [dev]\n");
-        exit(-1);
-    }
+		exit(-1);
+	}
 	
 	/* Creating a window with AUTO_SIZE option for displaying the output */
-    namedWindow( obstacle_window_name, CV_WINDOW_AUTOSIZE );
-    namedWindow( centroid_window_name, CV_WINDOW_AUTOSIZE );
+	namedWindow( obstacle_window_name, CV_WINDOW_AUTOSIZE );
+	namedWindow( centroid_window_name, CV_WINDOW_AUTOSIZE );
 
 	/* Start capturing the frames from the input camera device */
-    capture = (CvCapture *)cvCreateCameraCapture(dev);
+	capture = (CvCapture *)cvCreateCameraCapture(dev);
 	
 	/* Setting the resolution using the cvSetCaptureProperty interface */
-    cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH, HRES);
-    cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT, VRES);
+	cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH, HRES);
+	cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT, VRES);
 	
 	/* Printing the scheduler policy */
 	syslog(LOG_DEBUG, "%s", "Before adjustments to scheduling policy:\n");
 	print_scheduler();
 	
 	/* Initialization of CPU set for different threads*/
-    CPU_ZERO(&cpu_1);
-    CPU_SET(0, &cpu_1);
-    CPU_ZERO(&cpu_2);
-    CPU_SET(1, &cpu_2);
-    CPU_ZERO(&cpu_3);
-    CPU_SET(2, &cpu_3);
+	CPU_ZERO(&cpu_1);
+	CPU_SET(0, &cpu_1);
+	CPU_ZERO(&cpu_2);
+	CPU_SET(1, &cpu_2);
+	CPU_ZERO(&cpu_3);
+	CPU_SET(2, &cpu_3);
 
 	/* Initialization of semaphores */
 
 	
 	if (sem_init(&coordinates_sem, 0, 1) == -1)
-    {
+	{
 		syslog(LOG_ERR, "sem_init for coordinates_sem: failed: %s\n", strerror(errno)); 
 	}
 
 	if (sem_init(&obstacle_sem, 0, 1) == -1)
-    { 
+	{ 
 		syslog(LOG_ERR, "sem_init for obstacle_sem: failed: %s\n", strerror(errno)); 
 	}
 
@@ -706,7 +706,7 @@ int main (int argc, char *argv[])
 	}
 	
 
-    /* Suspending main until all the threads complete its execution */
+	/* Suspending main until all the threads complete its execution */
 	pthread_join ( FrameCapture_Thread , NULL );
 	pthread_join ( CentroidDetection_Thread , NULL );
 	pthread_join ( ObstacleMovement_Thread , NULL );
@@ -724,7 +724,7 @@ int main (int argc, char *argv[])
 	
 	
 	/* Stop capturing and free the resources */
-    cvReleaseCapture(&capture);
+	cvReleaseCapture(&capture);
 	
 	
 	sem_destroy(&coordinates_sem);
