@@ -191,7 +191,7 @@ void *FrameCapture(void * unused)
 		syslog(LOG_INFO, "%s", "FrameCapture thread grabbing frame resource\n");
 		/*Mutex lock prior to frame capture*/
 		pthread_mutex_lock(&rsrc_frameCapture);
-       	frame_original=cvQueryFrame(capture);
+		frame_original=cvQueryFrame(capture);
 		/*Mutex unlocked after frame capture complete*/
 		pthread_mutex_unlock(&rsrc_frameCapture);
 
@@ -294,6 +294,7 @@ void *CentroidDetection(void * unused)
 						pthread_mutex_lock(&rsrc_Coordinates);
 						coordinate_x = (moment.m10/area);
 						coordinate_y = (moment.m01/area);
+						/* Set answer to true indicating there is a valid axes value*/
 						answer = true;
 						pthread_mutex_unlock(&rsrc_Coordinates);
 						(x_coordinate << coordinate_x);
@@ -373,12 +374,14 @@ void *ObstacleMovement(void * unused)
 		pthread_mutex_unlock(&rsrc_Coordinates);
 		/* Copying the coordinate of the object for trajectory */
 		if(trajectory_count == 0 && temp == true)
+		/*Set start position for tracing the points on the screen*/
 		{		
 			start_point.x = obstacle_xaxes;		
 			start_point.y = obstacle_yaxes;
 			trajectory_count++;
 		}
 		else if(trajectory_count > 0 && temp == true)
+		/*Keep adding new points to continue tracing the path*/
 		{	
 			end_point.x = obstacle_xaxes;		
 			end_point.y = obstacle_yaxes;
@@ -442,7 +445,7 @@ Function definition for video output thread
 ********************************************************************/
 void *Video_Output(void * unused) 
 {
-	syslog(LOG_INFO, "%s", "Entered Video wrier\n");
+	syslog(LOG_INFO, "%s", "Entered Video writer thread\n");
 	/* Opening a video writer */
 	cv::VideoWriter output_cap("/home/subhradeep/video/video_output/sri.avi",
                CV_FOURCC('M','J','P','G'), 1, cv::Size ( 640,480), true);
@@ -470,6 +473,7 @@ void *Video_Output(void * unused)
 		{
 			various_images[video_count].copyTo(retrieve_element);
 			output_cap.write(retrieve_element);
+			/*Decrement video_count to indicate that no valid frame exists*/
 			video_count--;
 		}
 		pthread_mutex_unlock(&rsrc_video);
@@ -563,11 +567,11 @@ int main (int argc, char *argv[])
     cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH, HRES);
     cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT, VRES);
 	
-	/* Printing the schedular policy */
+	/* Printing the scheduler policy */
 	syslog(LOG_DEBUG, "%s", "Before adjustments to scheduling policy:\n");
 	print_scheduler();
 	
-	/* Initializaion of CPU set for different threads*/
+	/* Initialization of CPU set for different threads*/
     CPU_ZERO(&cpu_1);
     CPU_SET(0, &cpu_1);
     CPU_ZERO(&cpu_2);
@@ -575,7 +579,7 @@ int main (int argc, char *argv[])
     CPU_ZERO(&cpu_3);
     CPU_SET(2, &cpu_3);
 
-	/* Initializaion of semaphores */
+	/* Initialization of semaphores */
 
 	
 	if (sem_init(&coordinates_sem, 0, 1) == -1)
